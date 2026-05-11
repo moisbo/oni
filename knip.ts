@@ -8,7 +8,12 @@ const config: KnipConfig = {
     'src/reset.d.ts',
   ],
   ignoreBinaries: ['scripts/fetch-vocabs.mts'],
-  ignoreDependencies: ['@tsconfig/node-lts', '@total-typescript/ts-reset'],
+  ignoreDependencies: [
+    '@tsconfig/node-lts',
+    '@total-typescript/ts-reset',
+    // Loaded by semantic-release via `preset: 'conventionalcommits'`
+    'conventional-changelog-conventionalcommits',
+  ],
   compilers: {
     // For tailwind
     css: (text: string) => [...text.matchAll(/(?<=@)import[^;]+/g)].join('\n'),

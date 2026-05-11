@@ -1,0 +1,93 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Dry run (compute next version and release notes without publishing)
+        required: false
+        default: true
+        type: boolean
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+      id-token: write
+    outputs:
+      new_release_published: ${{ steps.release.outputs.new_release_published }}
+      new_release_version: ${{ steps.release.outputs.new_release_version }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: package.json
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint (biome)
+        run: pnpm run lint:biome
+
+      - name: Lint (types)
+        run: pnpm run lint:types
+
+      - name: Lint (knip)
+        run: pnpm run lint:knip
+
+      - name: Semantic Release
+        id: release
+        uses: cycjimmy/semantic-release-action@v4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          dry_run: ${{ inputs.dry_run }}
+
+      - name: Summary
+        env:
+          DRY_RUN: ${{ inputs.dry_run }}
+          PUBLISHED: ${{ steps.release.outputs.new_release_published }}
+          VERSION: ${{ steps.release.outputs.new_release_version }}
+        run: |
+          {
+            if [ "${DRY_RUN}" = "true" ]; then
+              echo "## Dry Run Complete"
+              if [ "${PUBLISHED}" = "true" ]; then
+                echo "Would release version: \`${VERSION}\`"
+              else
+                echo "No release would be made (no relevant commits since last release)."
+              fi
+            else
+              if [ "${PUBLISHED}" = "true" ]; then
+                echo "## Release Complete"
+                echo "Released version: \`${VERSION}\`"
+                echo "Visit the [releases page](https://github.com/${GITHUB_REPOSITORY}/releases) to see the new release."
+              else
+                echo "## No Release"
+                echo "No relevant commits since the last release."
+              fi
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  docker:
+    needs: release
+    if: ${{ !inputs.dry_run && needs.release.outputs.new_release_published == 'true' }}
+    uses: ./.github/workflows/docker.yml
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    with:
+      version: ${{ needs.release.outputs.new_release_version }}
