@@ -2,12 +2,9 @@ name: Docker Image
 
 on:
   push:
-    # TODO: Remove this once we merge new-api into main
-    branches: ["new-api"]
-    # Publish semver tags as releases
     tags: ["v*.*.*"]
   pull_request:
-    branches: ["main", "new-api"]
+    branches: ["main"]
 
 env:
   GHCR_REGISTRY: ghcr.io
