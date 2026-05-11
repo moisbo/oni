@@ -15,20 +15,20 @@ export type EafTier = {
   annotations: EafAnnotation[];
 };
 
-export type EafMediaDescriptor = {
+type EafMediaDescriptor = {
   mediaUrl: string;
   relativeMediaUrl?: string;
   mimeType: string;
   timeOrigin?: number;
 };
 
-export type EafLanguage = {
+type EafLanguage = {
   langId: string;
   langDef?: string;
   langLabel?: string;
 };
 
-export type EafLinguisticType = {
+type EafLinguisticType = {
   id: string;
   timeAlignable?: boolean;
   constraints?: string;
