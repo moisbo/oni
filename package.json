@@ -37,7 +37,7 @@
     "@sentry/vue": "^10.52.0",
     "@tailwindcss/vite": "^4.2.4",
     "@terraformer/wkt": "^2.2.1",
-    "@unhead/vue": "^2.1.13",
+    "@unhead/vue": "^3.1.0",
     "element-plus": "^2.13.7",
     "fuse.js": "^7.3.0",
     "latlon-geohash": "^2.0.0",
