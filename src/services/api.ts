@@ -285,7 +285,7 @@ export class ApiService {
   }
 
   async acceptTerms(id: number) {
-    const terms = await this.#get<AcceptTermsResponse>('/user/terms/accept', { id: String(id) });
+    const terms = await this.#post<AcceptTermsResponse>('/user/terms/accept', { id: String(id) });
 
     return terms;
   }
