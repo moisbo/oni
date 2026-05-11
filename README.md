@@ -116,6 +116,16 @@ lives in **[docs/configuration.md](docs/configuration.md)**.
 A working starting point is in
 [`configuration.sample.json`](configuration.sample.json) at the repo root.
 
+## API
+
+Oni UI consumes the standard RO-Crate API
+([OpenAPI spec](https://github.com/Language-Research-Technology/ro-crate-api/blob/main/openapi.yaml),
+[hosted docs](https://language-research-technology.github.io/ro-crate-api/)),
+but also relies on a handful of endpoints, query parameters, response fields,
+and behaviours not in that spec. They are documented in
+**[docs/api-extensions.md](docs/api-extensions.md)** — required reading if you
+are implementing or maintaining a compatible backend.
+
 ## Deployment
 
 A production Docker image is published to Docker Hub
