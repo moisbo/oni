@@ -104,18 +104,27 @@ enum PreviewerType {
 
 // detect type from encoding format first
 let [previewerType, encodingFormat] = (() => {
-  for (const format of metadata.encodingFormat) {
-    if (typeof format !== 'string') {
+  const rawEncodingFormat = metadata?.encodingFormat;
+  const encodingFormats = Array.isArray(rawEncodingFormat)
+    ? rawEncodingFormat
+    : typeof rawEncodingFormat === 'string'
+      ? [rawEncodingFormat]
+      : [];
+
+  for (const raw of encodingFormats) {
+    if (typeof raw !== 'string') {
       continue;
     }
+    const format = raw.toLowerCase();
+
     for (const suffix of ['pdf', 'csv']) {
       if (format.endsWith(suffix)) {
-        return [PreviewerType[suffix as keyof typeof PreviewerType], format];
+        return [PreviewerType[suffix as keyof typeof PreviewerType], raw];
       }
     }
     for (const prefix of ['text', 'image', 'audio', 'video']) {
       if (format.startsWith(prefix)) {
-        return [PreviewerType[prefix as keyof typeof PreviewerType], format];
+        return [PreviewerType[prefix as keyof typeof PreviewerType], raw];
       }
     }
   }
