@@ -155,15 +155,13 @@ onMounted(() => {
 </script>
 
 <template>
-  <el-col>
+  <el-col class="w-full min-w-0">
     <el-row justify="center">
-      <el-col>
+      <el-col class="w-full min-w-0">
         <div class="container max-screen-lg mx-auto">
           <div v-if="entity.access.content">
-            <div v-if="previewerType === PreviewerType.pdf" class="flex justify-center w-full">
-              <el-row :span="24">
-                <PDFWidget :src="streamUrl" />
-              </el-row>
+            <div v-if="previewerType === PreviewerType.pdf" class="w-full min-w-0">
+              <PDFWidget :src="streamUrl" />
             </div>
 
             <div v-else-if="previewerType === PreviewerType.csv" class="p-4 wrap-break-word">
