@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { TableInstance } from 'element-plus';
 import { computed, nextTick, ref, watch } from 'vue';
 import EafTimelineView from '@/components/widgets/EafTimelineView.vue';
 import { type EafDocument, parseEaf } from '@/composables/useEafParser';
@@ -101,7 +102,7 @@ const isActive = (startMs: number, endMs: number): boolean => {
   return currentTimeMs.value >= startMs && currentTimeMs.value < endMs;
 };
 
-const tableRef = ref<InstanceType<typeof import('element-plus')['ElTable']>>();
+const tableRef = ref<TableInstance>();
 
 const activeRowIndex = computed(() => {
   if (props.currentTime === undefined) {
