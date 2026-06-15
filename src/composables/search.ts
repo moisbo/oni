@@ -484,7 +484,12 @@ export const useSearch = (searchType: 'list' | 'map') => {
     },
   );
 
-  onMounted(() => doWork());
+  // The map drives its own first search from SearchMapView once the view has
+  // been fitted (so the geohash precision matches the displayed zoom). Running
+  // an extra search here would race that one and can clobber the results.
+  if (!isMap) {
+    onMounted(() => doWork());
+  }
 
   syncStateFromUrl();
 

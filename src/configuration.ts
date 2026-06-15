@@ -110,14 +110,22 @@ const homeSchema = z.strictObject({
   content: z.string().optional(),
 });
 
+// Sensible fallbacks covering Australia and the near Pacific, applied when a
+// config omits mapConfig (or individual fields) entirely.
+const defaultBoundingBox = {
+  topRight: { lat: 0, lng: 180 },
+  bottomLeft: { lat: -50, lng: 110 },
+};
+const defaultZoom = 3;
+
 const mapSchema = z.strictObject({
-  boundingBox: z.strictObject({
-    topRight: z.strictObject({ lat: z.number(), lng: z.number() }),
-    bottomLeft: z.strictObject({ lat: z.number(), lng: z.number() }),
-  }),
-  precision: z.number(),
-  center: z.strictObject({ lat: z.number(), lng: z.number() }),
-  zoom: z.number(),
+  boundingBox: z
+    .strictObject({
+      topRight: z.strictObject({ lat: z.number(), lng: z.number() }),
+      bottomLeft: z.strictObject({ lat: z.number(), lng: z.number() }),
+    })
+    .default(defaultBoundingBox),
+  zoom: z.number().default(defaultZoom),
 });
 
 const citeData = z.strictObject({
@@ -201,11 +209,12 @@ const uiSchema = z.strictObject({
       replaysOnErrorSampleRate: z.number().min(0).max(1).optional(),
     })
     .optional(),
-  mapConfig: mapSchema,
+  mapConfig: mapSchema.optional().default({ boundingBox: defaultBoundingBox, zoom: defaultZoom }),
   features: z
     .strictObject({
       hasZipDownload: z.boolean().optional(),
       hasAnnouncements: z.boolean().optional(),
+      disableMaps: z.boolean().optional(),
       errorPageImage: z.union([z.boolean(), z.string()]).optional().default(true),
       fileVisibilityField: z.union([z.string(), z.boolean()]).optional().default('display'),
       preferredPhotoField: z.string().optional().default('image'),

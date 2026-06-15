@@ -586,19 +586,19 @@ The `{url}` placeholder is automatically replaced with the URL-encoded current p
 
 Configure the geographical map display for spatial data.
 
+`ui.mapConfig` and each of its fields are optional — when omitted, sensible defaults (covering Australia and the near Pacific) are applied. `boundingBox` sets both the initial map view and the default search area. Maps load tiles from OpenStreetMap and therefore require internet access; for offline deployments disable them with [`ui.features.disableMaps`](#features-optional).
+
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
+| `ui.mapConfig` | object | No | Map display settings; defaults applied when omitted |
+| `ui.mapConfig.boundingBox` | object | No | Bounding box for the initial view and default search area |
 | `ui.mapConfig.boundingBox.topRight` | object | Yes | Top-right corner coordinates |
 | `ui.mapConfig.boundingBox.topRight.lat` | number | Yes | Latitude |
 | `ui.mapConfig.boundingBox.topRight.lng` | number | Yes | Longitude |
 | `ui.mapConfig.boundingBox.bottomLeft` | object | Yes | Bottom-left corner coordinates |
 | `ui.mapConfig.boundingBox.bottomLeft.lat` | number | Yes | Latitude |
 | `ui.mapConfig.boundingBox.bottomLeft.lng` | number | Yes | Longitude |
-| `ui.mapConfig.precision` | number | Yes | Geohash precision level |
-| `ui.mapConfig.center` | object | Yes | Default map centre coordinates |
-| `ui.mapConfig.center.lat` | number | Yes | Centre latitude |
-| `ui.mapConfig.center.lng` | number | Yes | Centre longitude |
-| `ui.mapConfig.zoom` | number | Yes | Default zoom level |
+| `ui.mapConfig.zoom` | number | No | Default zoom level used to derive search geohash precision |
 
 **Example:**
 
@@ -610,8 +610,6 @@ Configure the geographical map display for spatial data.
         "topRight": { "lat": -11.523088, "lng": 162.649886 },
         "bottomLeft": { "lat": -42.811522, "lng": 108.64901 }
       },
-      "precision": 5,
-      "center": { "lat": -25, "lng": 134 },
       "zoom": 8
     }
   }
@@ -677,6 +675,7 @@ Enable or disable specific features.
 | `ui.features.errorPageImage` | boolean \| string | No | Controls the image shown on the 404 page. Set `false` to hide it, `true` to use the default image, or provide a string URL/path to use a custom image. |
 | `ui.features.fileVisibilityField` | string \| boolean | No | Controls file preview visibility filtering. Set a string to choose the metadata field name (for example, `"display"`). Set `true` to use the default field (`"display"`). Set `false` to disable visibility filtering and always show files that are otherwise accessible. |
 | `ui.features.preferredPhotoField` | string | No | Metadata field name on Person entities used to select the preferred/main photo in PersonView. The field may contain a string path/ID, an object with `@id`, or arrays of those values. Default is `"image"`. |
+| `ui.features.disableMaps` | boolean | No | Disable all map features (the `/map` route, the list/map view toggle, and embedded location maps). Use for offline deployments (e.g. local-network Raspberry Pis) where OpenStreetMap tiles cannot be reached. Maps are enabled by default. |
 
 **Example:**
 
@@ -688,7 +687,8 @@ Enable or disable specific features.
       "hasAnnouncements": true,
       "errorPageImage": true,
       "fileVisibilityField": "display",
-      "preferredPhotoField": "image"
+      "preferredPhotoField": "image",
+      "disableMaps": false
     }
   }
 }
