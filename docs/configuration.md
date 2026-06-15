@@ -582,8 +582,11 @@ The `{url}` placeholder is automatically replaced with the URL-encoded current p
 
 Configure the geographical map display for spatial data.
 
+`ui.mapConfig` is optional — when omitted, sensible defaults (covering Australia and the near Pacific) are applied. If you supply `mapConfig`, all of its fields are required. Maps load tiles from OpenStreetMap and therefore require internet access; for offline deployments disable them with [`ui.features.disableMaps`](#features-optional).
+
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
+| `ui.mapConfig` | object | No | Map display settings; defaults applied when omitted |
 | `ui.mapConfig.boundingBox.topRight` | object | Yes | Top-right corner coordinates |
 | `ui.mapConfig.boundingBox.topRight.lat` | number | Yes | Latitude |
 | `ui.mapConfig.boundingBox.topRight.lng` | number | Yes | Longitude |
@@ -670,6 +673,7 @@ Enable or disable specific features.
 |-------|------|----------|-------------|
 | `ui.features.hasZipDownload` | boolean | No | Whether to enable ZIP download functionality |
 | `ui.features.hasAnnouncements` | boolean | No | Whether to fetch and display site-wide announcements (e.g. downtime warnings) on app boot. Requires the backend to implement [`GET /announcements`](./api-extensions.md#get-announcements). |
+| `ui.features.disableMaps` | boolean | No | Disable all map features (the `/map` route, the list/map view toggle, and embedded location maps). Use for offline deployments (e.g. local-network Raspberry Pis) where OpenStreetMap tiles cannot be reached. Maps are enabled by default. |
 
 **Example:**
 
@@ -678,7 +682,8 @@ Enable or disable specific features.
   "ui": {
     "features": {
       "hasZipDownload": true,
-      "hasAnnouncements": true
+      "hasAnnouncements": true,
+      "disableMaps": false
     }
   }
 }

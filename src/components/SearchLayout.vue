@@ -204,7 +204,7 @@ const clean = (value: string) => {
               </span>
             </el-col>
 
-            <el-col :xs="24" :sm="24" :md="6" :lg="6" :xl="6">
+            <el-col v-if="!ui.features?.disableMaps" :xs="24" :sm="24" :md="6" :lg="6" :xl="6">
               <el-button size="large" @click="router.push({ path: isMap ? '/search' : '/map', query: route.query })">
                 <span>
                   <font-awesome-icon :icon="`fa-solid fa-${isMap ? 'map-location' : 'list'}`" />

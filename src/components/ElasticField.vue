@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 import MetaField from '@/components/MetaField.vue';
 import LeafletMap from '@/components/widgets/LeafletMap.vue';
 
 import { ui } from '@/configuration';
 import { first, formatDuration, formatFileSize, joinAll, shortenText } from '@/tools';
+
+const { t } = useI18n();
 
 const props = defineProps<{
   // biome-ignore lint/suspicious/noExplicitAny: FIXME
@@ -97,8 +100,13 @@ const derived = computed(() => {
   </template>
 
   <template v-else-if="derived.geometry">
-    <LeafletMap class="h-72 flex grow min-w-50 mr-4" :modelValue="derived.geometry" :enableDrawing="false" />
-    <p class="text-sm">This map is not designed or suitable for Native Title research.</p>
+    <template v-if="ui.features?.disableMaps">
+      <p class="text-sm">{{ t('common.mapUnavailable') }}</p>
+    </template>
+    <template v-else>
+      <LeafletMap class="h-72 flex grow min-w-50 mr-4" :modelValue="derived.geometry" :enableDrawing="false" />
+      <p class="text-sm">{{ t('common.mapNativeTitleWarning') }}</p>
+    </template>
   </template>
 
   <template v-else-if="derived.url">

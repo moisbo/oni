@@ -1,6 +1,8 @@
 {
   "common": {
     "home": "Startseite",
+    "mapUnavailable": "Die Kartenansicht ist nicht verfügbar",
+    "mapNativeTitleWarning": "Diese Karte ist nicht für die Erforschung von Native Title (australische indigene Landrechte) konzipiert oder geeignet.",
     "help": "Hilfe",
     "about": "Über",
     "search": "Suchen",

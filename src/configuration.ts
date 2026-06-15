@@ -201,11 +201,20 @@ const uiSchema = z.strictObject({
       replaysOnErrorSampleRate: z.number().min(0).max(1).optional(),
     })
     .optional(),
-  mapConfig: mapSchema,
+  mapConfig: mapSchema.optional().default({
+    boundingBox: {
+      topRight: { lat: 0, lng: 180 },
+      bottomLeft: { lat: -50, lng: 110 },
+    },
+    precision: 1,
+    center: { lat: -27, lng: 140 },
+    zoom: 3,
+  }),
   features: z
     .strictObject({
       hasZipDownload: z.boolean().optional(),
       hasAnnouncements: z.boolean().optional(),
+      disableMaps: z.boolean().optional(),
       errorPageImage: z.union([z.boolean(), z.string()]).optional().default(true),
     })
     .optional(),

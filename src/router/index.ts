@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory, type NavigationGuardWithThis, type RouterOptions } from 'vue-router';
 
+import { ui } from '@/configuration';
 import { authReady, getUser, login } from '@/services/auth';
 import { useAuthStore } from '@/stores/auth';
 import About from '@/views/AboutView.vue';
@@ -34,11 +35,18 @@ const routes: RouterOptions['routes'] = [
         name: 'search',
         component: Search,
       },
-      {
-        path: '/map',
-        name: 'map',
-        component: SearchMap,
-      },
+      // Maps depend on OpenStreetMap tiles, so they are unavailable in offline
+      // deployments (e.g. local-network Raspberry Pis). When disabled the route
+      // is not registered and /map falls through to the 404 view.
+      ...(ui.features?.disableMaps
+        ? []
+        : [
+            {
+              path: '/map',
+              name: 'map',
+              component: SearchMap,
+            },
+          ]),
       {
         path: '/list',
         name: 'list',
