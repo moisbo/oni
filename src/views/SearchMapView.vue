@@ -125,9 +125,6 @@ const initMap = async () => {
     maxZoom: 18,
   });
 
-  // Starting point for zoom out
-  map.setView(mapConfig.center, mapConfig.zoom);
-
   L.tileLayer('//{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors',
   }).addTo(map);
@@ -140,11 +137,11 @@ const initMap = async () => {
   const control = new SearchControl();
   control.addTo(map);
 
-  // Zoom to bounds
+  // Set the initial view to fit the configured bounding box
   const topRight = L.latLng(mapConfig.boundingBox.topRight);
   const bottomLeft = L.latLng(mapConfig.boundingBox.bottomLeft);
   const bounds = L.latLngBounds(bottomLeft, topRight);
-  map.flyToBounds(bounds);
+  map.fitBounds(bounds);
 };
 
 const clearLayers = () => {
@@ -452,6 +449,10 @@ const initControls = () => {
 onMounted(async () => {
   await initMap();
   initControls();
+  // Sync the search to the actual fitted view so the geohash precision matches
+  // the displayed zoom on first load. Previously this happened as a side effect
+  // of flyToBounds' animated zoomend firing after initControls.
+  searchEvent();
 });
 
 onBeforeUnmount(() => map?.remove());
