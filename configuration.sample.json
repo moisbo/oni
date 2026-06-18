@@ -355,9 +355,11 @@
     },
     "features": {
       "hasZipDownload": true,
-      "hasAnnouncements": false,
+      "hasAnnouncements": false
+    },
+    "presentation": {
       "errorPageImage": true,
-      "fileVisibilityField": "display",
+      "fileVisibilityField": ["display", "photo"],
       "preferredPhotoField": "image"
     }
   },

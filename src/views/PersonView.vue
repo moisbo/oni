@@ -6,12 +6,13 @@ import { useRoute } from 'vue-router';
 import AccessHelper from '@/components/AccessHelper.vue';
 import FileResolve from '@/components/FileResolve.vue';
 import MetaField from '@/components/MetaField.vue';
+import { resolveFileVisibilityConfig, resolvePreferredPhotoField } from '@/composables/fileVisibility';
 import { useHead } from '@/composables/head';
 import { useEntityView } from '@/composables/useEntityView';
 import { ui } from '@/configuration';
 import type { ApiService, EntityType, FileType, GetFilesParams, RoCrate } from '@/services/api';
+import { resolvePersonFilePresentationData } from '@/services/personFiles';
 
-const imageExtensions = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif', 'svg']);
 const FETCH_LIMIT = 1000;
 
 const api = inject<ApiService>('api');
@@ -23,13 +24,8 @@ const route = useRoute();
 const head = injectHead();
 const gtm = useGtm();
 const { object: config } = ui;
-const fileVisibilitySetting = ui.features?.fileVisibilityField;
-const fileVisibilityField =
-  typeof fileVisibilitySetting === 'string' && fileVisibilitySetting.trim().length > 0
-    ? fileVisibilitySetting
-    : 'display';
-const isFileVisibilityEnabled = fileVisibilitySetting !== false;
-const preferredPhotoField = ui.features?.preferredPhotoField || 'image';
+const fileVisibility = resolveFileVisibilityConfig(ui.presentation?.fileVisibilityField);
+const preferredPhotoField = resolvePreferredPhotoField(ui.presentation?.preferredPhotoField);
 
 const { name, meta, populateName, populateMeta, handleMissingEntity } = useEntityView(config);
 
@@ -38,6 +34,7 @@ const entity = ref<EntityType | undefined>();
 const metadata = ref<RoCrate | undefined>();
 const files = ref<FileType[]>([]);
 const photoUrls = ref<Record<string, string>>({});
+const browserImageById = ref<Record<string, boolean>>({});
 const fileVisibilityById = ref<Record<string, boolean>>({});
 const selectedPhotoId = ref<string>();
 
@@ -76,33 +73,6 @@ const extractStringPaths = (value: unknown): string[] => {
   return [];
 };
 
-const toVisibilityFlag = (value: unknown): boolean | undefined => {
-  if (typeof value === 'boolean') {
-    return value;
-  }
-
-  if (typeof value === 'string') {
-    const normalized = value.trim().toLowerCase();
-    if (normalized === 'false' || normalized === 'no') {
-      return false;
-    }
-    if (normalized === 'true' || normalized === 'yes') {
-      return true;
-    }
-  }
-
-  if (Array.isArray(value)) {
-    for (const item of value) {
-      const parsed = toVisibilityFlag(item);
-      if (parsed !== undefined) {
-        return parsed;
-      }
-    }
-  }
-
-  return undefined;
-};
-
 const photoFiles = computed(() => {
   return files.value.filter((file) => {
     if (!file.access.content) {
@@ -117,10 +87,7 @@ const photoFiles = computed(() => {
       return true;
     }
 
-    const path = file.filename || '';
-    const extension = path.split('.').pop()?.toLowerCase();
-
-    return extension ? imageExtensions.has(extension) : false;
+    return browserImageById.value[file.id] === true;
   });
 });
 
@@ -221,46 +188,6 @@ const fetchAllPages = async <T>(
   return collected;
 };
 
-const resolvePhotoUrls = async () => {
-  const entries = await Promise.all(
-    photoFiles.value.map(async (file) => {
-      const url = await api.getFileUrl(file.id, file.filename, false);
-
-      return [file.id, url || ''] as const;
-    }),
-  );
-
-  photoUrls.value = Object.fromEntries(entries);
-};
-
-const resolveFileVisibility = async () => {
-  if (!isFileVisibilityEnabled) {
-    fileVisibilityById.value = Object.fromEntries(files.value.map((file) => [file.id, true]));
-
-    return;
-  }
-
-  const entries = await Promise.all(
-    files.value.map(async (file) => {
-      try {
-        const result = await api.getEntity(file.id);
-        if ('error' in result || !result.metadata) {
-          return [file.id, true] as const;
-        }
-
-        const metadataRecord = result.metadata as Record<string, unknown>;
-        const flag = toVisibilityFlag(metadataRecord[fileVisibilityField]);
-
-        return [file.id, flag ?? true] as const;
-      } catch {
-        return [file.id, true] as const;
-      }
-    }),
-  );
-
-  fileVisibilityById.value = Object.fromEntries(entries);
-};
-
 const fetchFiles = async (id: string) => {
   files.value = await fetchAllPages<FileType>(
     (params) => api.getFiles(params as GetFilesParams),
@@ -268,8 +195,15 @@ const fetchFiles = async (id: string) => {
     'files',
   );
 
-  await resolveFileVisibility();
-  await resolvePhotoUrls();
+  const presentationData = await resolvePersonFilePresentationData({
+    api,
+    files: files.value,
+    fileVisibility,
+  });
+
+  fileVisibilityById.value = presentationData.fileVisibilityById;
+  photoUrls.value = presentationData.photoUrls;
+  browserImageById.value = presentationData.browserImageById;
 };
 
 const populate = (md: RoCrate) => {

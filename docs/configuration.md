@@ -34,6 +34,7 @@ at the repo root.
     - [Map Configuration](#map-configuration)
     - [Analytics (Optional)](#analytics-optional)
     - [Sentry Error Tracking (Optional)](#sentry-error-tracking-optional)
+    - [Presentation (Optional)](#presentation-optional)
     - [Features (Optional)](#features-optional)
     - [Pagination (Optional)](#pagination-optional)
   - [API Configuration](#api-configuration)
@@ -664,6 +665,30 @@ Configure Sentry for error tracking and monitoring.
 }
 ```
 
+### Presentation (Optional)
+
+Configure display and rendering behavior for specific views.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `ui.presentation.errorPageImage` | boolean \| string | No | Controls the image shown on the 404 page. Set `false` to hide it, `true` to use the default image, or provide a string URL/path to use a custom image. |
+| `ui.presentation.fileVisibilityField` | string \| string[] \| boolean | No | Controls file preview visibility filtering. Set a string or string array to choose one or more metadata field names (for example, `"display"` or `["display", "photo"]`). Set `true` to use the default field (`"display"`). Set `false` to disable visibility filtering and always show files that are otherwise accessible. |
+| `ui.presentation.preferredPhotoField` | string | No | Metadata field name on Person entities used to select the preferred/main photo in PersonView. The field may contain a string path/ID, an object with `@id`, or arrays of those values. Default is `"image"`. |
+
+**Example:**
+
+```json
+{
+  "ui": {
+    "presentation": {
+      "errorPageImage": true,
+      "fileVisibilityField": ["display", "photo"],
+      "preferredPhotoField": "image"
+    }
+  }
+}
+```
+
 ### Features (Optional)
 
 Enable or disable specific features.
@@ -672,9 +697,6 @@ Enable or disable specific features.
 |-------|------|----------|-------------|
 | `ui.features.hasZipDownload` | boolean | No | Whether to enable ZIP download functionality |
 | `ui.features.hasAnnouncements` | boolean | No | Whether to fetch and display site-wide announcements (e.g. downtime warnings) on app boot. Requires the backend to implement [`GET /announcements`](./api-extensions.md#get-announcements). |
-| `ui.features.errorPageImage` | boolean \| string | No | Controls the image shown on the 404 page. Set `false` to hide it, `true` to use the default image, or provide a string URL/path to use a custom image. |
-| `ui.features.fileVisibilityField` | string \| boolean | No | Controls file preview visibility filtering. Set a string to choose the metadata field name (for example, `"display"`). Set `true` to use the default field (`"display"`). Set `false` to disable visibility filtering and always show files that are otherwise accessible. |
-| `ui.features.preferredPhotoField` | string | No | Metadata field name on Person entities used to select the preferred/main photo in PersonView. The field may contain a string path/ID, an object with `@id`, or arrays of those values. Default is `"image"`. |
 | `ui.features.disableMaps` | boolean | No | Disable all map features (the `/map` route, the list/map view toggle, and embedded location maps). Use for offline deployments (e.g. local-network Raspberry Pis) where OpenStreetMap tiles cannot be reached. Maps are enabled by default. |
 
 **Example:**
@@ -685,9 +707,6 @@ Enable or disable specific features.
     "features": {
       "hasZipDownload": true,
       "hasAnnouncements": true,
-      "errorPageImage": true,
-      "fileVisibilityField": "display",
-      "preferredPhotoField": "image",
       "disableMaps": false
     }
   }
@@ -697,8 +716,10 @@ Enable or disable specific features.
 **File visibility behavior:**
 
 - The configured field is read from file metadata.
-- Hidden values are `false`, `"no"`.
+- If multiple fields are configured, each is checked.
+- Hidden values are boolean `false` only.
 - Any other value, or an absent field, leaves the file visible.
+- If any configured field is `false`, the file is hidden.
 - If `fileVisibilityField` is set to `false`, visibility filtering is disabled.
 - If `fileVisibilityField` is set to `true`, the default field `"display"` is used.
 

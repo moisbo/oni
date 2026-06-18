@@ -8,7 +8,7 @@ import { ui } from '@/configuration';
 const { t } = useI18n();
 const router = useRouter();
 
-const errorPageImage = ui.features?.errorPageImage;
+const errorPageImage = ui.presentation?.errorPageImage;
 const showImage = errorPageImage !== false;
 const imageSrc = typeof errorPageImage === 'string' ? errorPageImage : alpacaSVG;
 const textColSpan = showImage ? 12 : 20;

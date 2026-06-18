@@ -52,7 +52,7 @@ const derived = computed(() => {
     name = formatFileSize(field);
   } else if (durationFields.includes(title) && typeof field === 'number') {
     name = formatDuration(field);
-  } else if (['string', 'number'].includes(typeof field)) {
+  } else if (['string', 'number', 'boolean'].includes(typeof field)) {
     name = String(field);
   } else if (isIdentifier(field)) {
     identifier = first(field.name);

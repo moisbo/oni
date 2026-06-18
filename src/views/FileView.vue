@@ -62,7 +62,7 @@ const getFileMetadata = async () => {
   }
 
   try {
-    const { entity, metadata: md } = await api.getEntity(id);
+    const { entity: fileEntity, metadata: md } = await api.getEntity(id);
     if (!md) {
       router.replace({
         name: 'NotFound',
@@ -74,7 +74,6 @@ const getFileMetadata = async () => {
       return;
     }
 
-    const fileEntity = entity;
     populateData(md as unknown as FileRoCrate, fileEntity);
 
     if (fileEntity.memberOf?.id) {

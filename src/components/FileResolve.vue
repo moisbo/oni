@@ -5,6 +5,7 @@ import CSVWidget from '@/components/widgets/CSVWidget.vue';
 import EafTranscriptionWidget from '@/components/widgets/EafTranscriptionWidget.vue';
 import PDFWidget from '@/components/widgets/PDFWidget.vue';
 import PlainTextWidget from '@/components/widgets/PlainTextWidget.vue';
+import { isFileVisibleByMetadata, resolveFileVisibilityConfig } from '@/composables/fileVisibility';
 import { ui } from '@/configuration';
 import type { AnnotationRef, ApiService, EntityType, RoCrate } from '@/services/api';
 import { first } from '@/tools';
@@ -30,42 +31,8 @@ const annotationUrls = ref<string[]>([]);
 const currentTime = ref<number>(0);
 const mediaDuration = ref<number>(0);
 const mediaRef = ref<HTMLAudioElement | HTMLVideoElement | null>(null);
-const fileVisibilitySetting = ui.features?.fileVisibilityField;
-const fileVisibilityField =
-  typeof fileVisibilitySetting === 'string' && fileVisibilitySetting.trim().length > 0
-    ? fileVisibilitySetting
-    : 'display';
-const isFileVisibilityEnabled = fileVisibilitySetting !== false;
-
-const toVisibilityFlag = (value: unknown): boolean | undefined => {
-  if (typeof value === 'boolean') {
-    return value;
-  }
-
-  if (typeof value === 'string') {
-    const normalized = value.trim().toLowerCase();
-    if (normalized === 'false' || normalized === 'no') {
-      return false;
-    }
-    if (normalized === 'true' || normalized === 'yes') {
-      return true;
-    }
-  }
-
-  if (Array.isArray(value)) {
-    for (const item of value) {
-      const parsed = toVisibilityFlag(item);
-      if (parsed !== undefined) {
-        return parsed;
-      }
-    }
-  }
-
-  return undefined;
-};
-
-const visibilityValue = (metadata as unknown as Record<string, unknown>)[fileVisibilityField];
-const shouldDisplayFile = !isFileVisibilityEnabled || toVisibilityFlag(visibilityValue) !== false;
+const fileVisibility = resolveFileVisibilityConfig(ui.presentation?.fileVisibilityField);
+const shouldDisplayFile = isFileVisibleByMetadata(metadata as unknown as Record<string, unknown>, fileVisibility);
 
 const resolveFile = async () => {
   if (!shouldDisplayFile) {
