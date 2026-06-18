@@ -36,6 +36,7 @@ const files = ref<FileType[]>([]);
 const photoUrls = ref<Record<string, string>>({});
 const browserImageById = ref<Record<string, boolean>>({});
 const fileVisibilityById = ref<Record<string, boolean>>({});
+const isPhotoVisibilityReady = ref(false);
 const selectedPhotoId = ref<string>();
 
 const normalizePath = (value: string) => value.replace(/^\.\//, '').split(/[?#]/)[0] || value;
@@ -189,7 +190,13 @@ const fetchAllPages = async <T>(
 };
 
 const fetchFiles = async (id: string) => {
-  files.value = await fetchAllPages<FileType>(
+  isPhotoVisibilityReady.value = false;
+  files.value = [];
+  photoUrls.value = {};
+  browserImageById.value = {};
+  fileVisibilityById.value = {};
+
+  const fetchedFiles = await fetchAllPages<FileType>(
     (params) => api.getFiles(params as GetFilesParams),
     { memberOf: id },
     'files',
@@ -197,13 +204,15 @@ const fetchFiles = async (id: string) => {
 
   const presentationData = await resolvePersonFilePresentationData({
     api,
-    files: files.value,
+    files: fetchedFiles,
     fileVisibility,
   });
 
+  files.value = fetchedFiles;
   fileVisibilityById.value = presentationData.fileVisibilityById;
   photoUrls.value = presentationData.photoUrls;
   browserImageById.value = presentationData.browserImageById;
+  isPhotoVisibilityReady.value = true;
 };
 
 const populate = (md: RoCrate) => {
@@ -275,7 +284,18 @@ fetchData();
     <el-col :xs="24" :sm="24" :md="24" :lg="16" :xl="16">
       <el-row :gutter="24">
         <el-col :xs="24" :sm="24" :md="24" :lg="8" :xl="8" class="pb-6 flex flex-col items-center lg:items-stretch">
-          <template v-if="photoMetadata && photoEntity">
+          <template v-if="!isPhotoVisibilityReady">
+            <el-row>
+              <el-col :span="24" class="flex justify-center">
+                <div
+                  class="w-full max-w-md h-64 rounded-lg border border-gray-300 bg-gray-100 text-gray-600 flex flex-col items-center justify-center"
+                >
+                  <p class="mt-3 text-sm">Loading photos...</p>
+                </div>
+              </el-col>
+            </el-row>
+          </template>
+          <template v-else-if="photoMetadata && photoEntity">
             <el-row justify="center" class="w-full">
               <el-col :span="24" class="flex justify-center">
                 <div class="w-full max-w-md mx-auto">
