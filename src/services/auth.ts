@@ -17,11 +17,8 @@ export type OniUser = {
   accessToken: string;
 };
 
-const {
-  rocrate: { endpoint, clientId },
-} = api;
-
 const { urlPrefix } = ui;
+const clientId = api.oidc?.clientId || 'TODO';
 
 let userManager: UserManager | undefined;
 let isRedirecting = false;
@@ -39,12 +36,11 @@ const getUserManager = async () => {
   }
 
   const prefix = urlPrefix || '';
-
   const config: UserManagerSettings = {
-    authority: endpoint,
-    client_id: clientId || 'TODO',
+    authority: api.oidc?.endpoint || api.rocrate.endpoint,
+    client_id: clientId,
     redirect_uri: `${window.location.origin}${prefix}/auth/callback`,
-    scope: 'public openid profile email',
+    scope: api.oidc?.scope || 'public openid profile email',
     response_type: 'code',
     userStore: new WebStorageStateStore({ store: window.localStorage }),
     automaticSilentRenew: true,

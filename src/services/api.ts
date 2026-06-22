@@ -201,9 +201,9 @@ export class ApiService {
   #store: ReturnType<typeof useAuthStore>;
 
   constructor() {
-    const { endpoint, path, clientId, usesRedirects } = api.rocrate;
-    this.#apiUri = `${endpoint}${path}`;
-    this.#clientId = clientId;
+    const { endpoint, usesRedirects } = api.rocrate;
+    this.#apiUri = `${endpoint}`;
+    this.#clientId = api.oidc?.clientId;
     this.#store = useAuthStore();
     this.#usesRedirects = usesRedirects;
   }
