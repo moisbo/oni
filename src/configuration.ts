@@ -192,6 +192,7 @@ const uiSchema = z.strictObject({
       name: z.string(),
       help: z.string().optional(),
       type: z.enum(['standard', 'date_histogram']).optional().default('standard'),
+      active: z.boolean().optional().default(false),
     }),
   ),
   searchFields: z.record(z.string(), z.string()),
