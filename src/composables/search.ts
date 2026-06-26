@@ -372,7 +372,7 @@ export const useSearch = (searchType: 'list' | 'map') => {
       const type = info.type;
       const hasSelectedValues = !!filters.value[facet] && filters.value[facet].length > 0;
       const existingFacet = facets.value?.find((f) => f.name === name);
-      const active = hasSelectedValues || existingFacet?.active === true || info.active === true;
+      const active = hasSelectedValues || existingFacet?.active || info.active;
 
       // biome-ignore lint/style/noNonNullAssertion: impossible for it to not exist
       const rawBuckets = newFacets[facet]!;
