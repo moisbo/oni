@@ -73,23 +73,55 @@ const explicitMetaSchema = z.strictObject({
 
 const metaSchema = z.union([filterMetaSchema, explicitMetaSchema]);
 
-const collectionSchema = z.strictObject({
-  meta: metaSchema,
-  memberSort: z.string().optional().default('name'),
+const relationshipFinderTargetSchema = z.union([
+  z.strictObject({
+    source: z.literal('entityId'),
+  }),
+  z.strictObject({
+    source: z.literal('entityField'),
+    field: z.string(),
+  }),
+  z.strictObject({
+    source: z.literal('metadataField'),
+    field: z.string(),
+  }),
+]);
+
+const relationshipLookupSchema = z.strictObject({
+  relationshipFields: z.array(z.string()).nonempty(),
+  target: relationshipFinderTargetSchema.optional().default({ source: 'entityId' }),
+  entityTypes: z.array(z.string()).optional(),
+  limit: z.number().int().positive().optional().default(1000),
 });
 
-const objectSchema = z.object({
+const relationshipFinderSchema = z.strictObject({
+  title: z.string(),
+  lookups: z.array(relationshipLookupSchema).nonempty(),
+  emptyText: z.string().optional(),
+  excludeCurrentEntity: z.boolean().optional().default(false),
+  limit: z.number().int().positive().optional().default(1000),
+});
+
+const entityViewSchema = z.strictObject({
   meta: metaSchema,
   memberSort: z.string().optional().default('name'),
+  relationships: z.array(relationshipFinderSchema).optional().default([]),
 });
+
+const entityViewOverrideSchema = z.strictObject({
+  meta: metaSchema.optional(),
+  memberSort: z.string().optional(),
+  relationships: z.array(relationshipFinderSchema).optional(),
+});
+
+const collectionSchema = entityViewSchema;
+
+const objectSchema = entityViewSchema;
 
 export type CollectionConfig = z.infer<typeof collectionSchema>;
 export type ObjectConfig = z.infer<typeof objectSchema>;
 
-const fileSchema = z.strictObject({
-  meta: metaSchema,
-  memberSort: z.string().optional().default('name'),
-});
+const fileSchema = entityViewSchema;
 
 export type FileConfig = z.infer<typeof fileSchema>;
 
@@ -210,6 +242,7 @@ const uiSchema = z.strictObject({
   }),
   collection: collectionSchema,
   object: objectSchema,
+  person: entityViewOverrideSchema.optional(),
   file: fileSchema,
   // Omitted entirely means "show every facet the API declares in GET
   // /capabilities"; an empty array means "show no facets". Configure only to

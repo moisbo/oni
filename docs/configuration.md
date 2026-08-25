@@ -11,6 +11,7 @@ at the repo root.
 - [Configuration](#configuration)
   - [Contents](#contents)
   - [Configuration Structure](#configuration-structure)
+  - [Base Path Deployment](#base-path-deployment)
   - [UI Configuration](#ui-configuration)
     - [Branding and Identity](#branding-and-identity)
     - [Management](#management)
@@ -26,6 +27,7 @@ at the repo root.
       - [Filter Mode](#filter-mode)
       - [Explicit Mode](#explicit-mode)
       - [File Metadata](#file-metadata)
+    - [Relationship Finders](#relationship-finders)
     - [HTML Head Metadata](#html-head-metadata)
     - [Aggregations (Faceted Search)](#aggregations-faceted-search)
     - [Login Configuration](#login-configuration)
@@ -48,6 +50,50 @@ The configuration file has two main sections:
 - **`ui`**: User interface settings, branding, navigation, search, metadata
       display, and features
 - **`api`**: API endpoint configuration for the RO-Crate API.
+
+## Base Path Deployment
+
+Oni can be served from a subdirectory, such as `/oni/`. Configure the Vite
+base path in a root-level `.env` file for local development:
+
+```env
+VITE_BASE_PATH=/oni/
+```
+
+For production, use `.env.production` or set `VITE_BASE_PATH` in the build
+environment:
+
+```sh
+VITE_BASE_PATH=/oni/ pnpm build
+```
+
+`VITE_BASE_PATH` is a build-time setting. Vite generates
+`import.meta.env.BASE_URL` from it; `BASE_URL` should not be configured
+directly. The resulting `dist` directory must be served under `/oni/`, with
+history fallback to `index.html` and the following files available below that
+prefix:
+
+```text
+/oni/configuration.json
+/oni/i18n/en.json
+/oni/assets/...
+```
+
+If `ui.urlPrefix` is set, it should match the base path without a trailing
+slash:
+
+```json
+{
+  "ui": {
+    "urlPrefix": "/oni"
+  }
+}
+```
+
+The optional `VITE_ONI_CONFIG_PATH` variable overrides the default
+configuration location. For example, use
+`VITE_ONI_CONFIG_PATH=/oni/configuration.json` when the configuration is not
+served at the default Vite base path.
 
 ## UI Configuration
 
@@ -471,6 +517,127 @@ In `explicit` mode, only fields listed in `show` are displayed.
         "mode": "explicit",
         "show": ["name", "description", "encodingFormat", "contentSize"]
       }
+    }
+  }
+}
+```
+
+### Relationship Finders
+
+Collection, object, file, and person views can render reusable relationship cards driven entirely by configuration.
+
+- `ui.collection.relationships`
+- `ui.object.relationships`
+- `ui.file.relationships`
+- `ui.person.relationships`
+
+`ui.person` is optional and acts as an override on top of `ui.object`, so you can configure person-specific relationships without duplicating the whole object metadata config.
+
+Each relationship finder supports these fields:
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `title` | string | Yes | Card heading shown in the view |
+| `lookups` | array | Yes | Multiple lookup definitions merged into a single card under one title |
+| `lookups[].relationshipFields` | array of strings | Yes | Search/filter fields for this lookup |
+| `lookups[].target.source` | `"entityId" \| "entityField" \| "metadataField"` | No | Where to read target IDs from for this lookup. Defaults to `entityId`. |
+| `lookups[].target.field` | string | For `entityField` or `metadataField` | Dot-path used by this lookup |
+| `lookups[].entityTypes` | array of strings | No | Optional entity type filter(s) for this lookup |
+| `lookups[].limit` | number | No | Optional per-lookup limit override |
+| `emptyText` | string | No | Custom message when no related entities are found |
+| `excludeCurrentEntity` | boolean | No | If `true`, hides the current entity from the result list |
+| `limit` | number | No | Maximum number of results requested per relationship field. Defaults to `1000`. |
+
+Use `lookups` when you want one widget/title that runs multiple relationship lookups and merges results.
+
+**Person view example:** find entities whose `ldac:speaker.keyword` points at the current person ID.
+
+```json
+{
+  "ui": {
+    "person": {
+      "relationships": [
+        {
+          "title": "Entities linked by ldac:speaker",
+          "lookups": [
+            {
+              "relationshipFields": ["ldac:speaker.keyword"],
+              "target": {
+                "source": "entityId"
+              }
+            }
+          ],
+          "excludeCurrentEntity": true
+        }
+      ]
+    }
+  }
+}
+```
+
+**File view example (grouped lookups):** one card title, two metadata-based lookups merged into one result list.
+
+```json
+{
+  "ui": {
+    "file": {
+      "meta": {
+        "mode": "explicit",
+        "show": ["name", "encodingFormat", "license"]
+      },
+      "relationships": [
+        {
+          "title": "Objects linked with this File",
+          "lookups": [
+            {
+              "relationshipFields": ["entityId"],
+              "target": {
+                "source": "metadataField",
+                "field": "ldac:speaker.@id"
+              }
+            },
+            {
+              "relationshipFields": ["entityId"],
+              "target": {
+                "source": "metadataField",
+                "field": "ards:soundRecordist.@id"
+              }
+            }
+          ],
+          "excludeCurrentEntity": true
+        }
+      ]
+    }
+  }
+}
+```
+
+**Entity field example:** use a property on the current entity object rather than RO-Crate metadata.
+
+```json
+{
+  "ui": {
+    "object": {
+      "meta": {
+        "mode": "filter",
+        "top": [],
+        "hide": []
+      },
+      "relationships": [
+        {
+          "title": "Other items in the same parent collection",
+          "lookups": [
+            {
+              "relationshipFields": ["memberOf.id"],
+              "target": {
+                "source": "entityField",
+                "field": "memberOf.id"
+              }
+            }
+          ],
+          "excludeCurrentEntity": true
+        }
+      ]
     }
   }
 }
