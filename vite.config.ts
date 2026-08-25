@@ -8,6 +8,8 @@ import vueDevTools from 'vite-plugin-vue-devtools';
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => ({
+  base: process.env.VITE_BASE_PATH || '/',
+
   plugins: [vue(), vueDevTools(), tailwindcss(), Unhead(), mode === 'production' ? sentryVitePlugin() : undefined],
 
   resolve: {
