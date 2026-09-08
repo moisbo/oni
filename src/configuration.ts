@@ -73,23 +73,63 @@ const explicitMetaSchema = z.strictObject({
 
 const metaSchema = z.union([filterMetaSchema, explicitMetaSchema]);
 
-const collectionSchema = z.strictObject({
-  meta: metaSchema,
-  memberSort: z.string().optional().default('name'),
+const relationshipFinderTargetSchema = z.union([
+  z.strictObject({
+    source: z.literal('entityId'),
+  }),
+  z.strictObject({
+    source: z.literal('entityField'),
+    field: z.string(),
+  }),
+  z.strictObject({
+    source: z.literal('metadataField'),
+    field: z.string(),
+  }),
+]);
+
+const relationshipLookupSchema = z
+  .strictObject({
+    // 'filter' searches other entities whose relationshipFields match the target ids;
+    // 'direct' fetches the target ids themselves as entities (e.g. a referenced Person).
+    mode: z.enum(['filter', 'direct']).optional().default('filter'),
+    relationshipFields: z.array(z.string()).optional(),
+    target: relationshipFinderTargetSchema.optional().default({ source: 'entityId' }),
+    entityTypes: z.array(z.string()).optional(),
+    limit: z.number().int().positive().optional(),
+  })
+  .refine((data) => data.mode === 'direct' || (data.relationshipFields?.length ?? 0) > 0, {
+    message: 'relationshipFields is required when mode is "filter"',
+    path: ['relationshipFields'],
+  });
+
+const relationshipFinderSchema = z.strictObject({
+  title: z.string(),
+  lookups: z.array(relationshipLookupSchema).nonempty(),
+  emptyText: z.string().optional(),
+  excludeCurrentEntity: z.boolean().optional().default(false),
+  limit: z.number().int().positive().optional(),
 });
 
-const objectSchema = z.object({
+const entityViewSchema = z.strictObject({
   meta: metaSchema,
   memberSort: z.string().optional().default('name'),
+  relationships: z.array(relationshipFinderSchema).optional().default([]),
 });
+
+const entityViewOverrideSchema = z.strictObject({
+  meta: metaSchema.optional(),
+  memberSort: z.string().optional(),
+  relationships: z.array(relationshipFinderSchema).optional(),
+});
+
+const collectionSchema = entityViewSchema;
+
+const objectSchema = entityViewSchema;
 
 export type CollectionConfig = z.infer<typeof collectionSchema>;
 export type ObjectConfig = z.infer<typeof objectSchema>;
 
-const fileSchema = z.strictObject({
-  meta: metaSchema,
-  memberSort: z.string().optional().default('name'),
-});
+const fileSchema = entityViewSchema;
 
 export type FileConfig = z.infer<typeof fileSchema>;
 
@@ -209,6 +249,7 @@ const uiSchema = z.strictObject({
   }),
   collection: collectionSchema,
   object: objectSchema,
+  person: entityViewOverrideSchema.optional(),
   file: fileSchema,
   // Omitted entirely means "show every facet the API declares in GET
   // /capabilities"; an empty array means "show no facets". Configure only to
@@ -301,3 +342,14 @@ export const ui = configuration.ui;
 export const api = configuration.api;
 // biome-ignore lint/style/noNonNullAssertion: pageSizes is guaranteed non-empty by Zod defaults
 export const defaultPageSize = ui.pagination.pageSizes[0]!;
+
+export type RelationshipLookupConfig = z.infer<typeof relationshipLookupSchema>;
+export type RelationshipFinderConfig = z.infer<typeof relationshipFinderSchema>;
+
+// ui.person is an override on top of ui.object; pre-merge it here so views don't
+// need to repeat the merge/fallback logic or re-annotate the result as ObjectConfig.
+export const personConfig: ObjectConfig = {
+  meta: ui.person?.meta ?? ui.object.meta,
+  memberSort: ui.person?.memberSort ?? ui.object.memberSort,
+  relationships: ui.person?.relationships ?? ui.object.relationships,
+};

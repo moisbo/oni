@@ -13,9 +13,11 @@ import MemberOfCard from '@/components/cards/MemberOfCard.vue';
 import RetrieveDataMetadata from '@/components/cards/RetrieveDataMetadata.vue';
 import TakedownCard from '@/components/cards/TakedownCard.vue';
 import MetaField from '@/components/MetaField.vue';
+import RelationshipEntityFinder from '@/components/RelationshipEntityFinder.vue';
 import MediaTypeIcon from '@/components/widgets/MediaTypeIcon.vue';
 import MemberOfLink from '@/components/widgets/MemberOfLink.vue';
 import { useHead } from '@/composables/head';
+import { useRelationshipLookups } from '@/composables/relationshipLookups';
 import { useEntityView } from '@/composables/useEntityView';
 import { defaultPageSize, ui } from '@/configuration';
 import { formatFileSize, joinAll } from '@/lib/tools';
@@ -38,10 +40,12 @@ const gtm = useGtm();
 const { name, meta, populateName, populateMeta, handleMissingEntity } = useEntityView(config);
 
 const files = ref<FileType[]>([]);
-const mediaTypes = computed(() => [...new Set(files.value.map((f) => f.mediaType))]);
-const isLoading = ref(false);
 const metadata = ref<RoCrate | undefined>();
 const entity = ref<EntityType | undefined>();
+
+const { resolveRelationshipLookups } = useRelationshipLookups(entity, metadata);
+const mediaTypes = computed(() => [...new Set(files.value.map((f) => f.mediaType))]);
+const isLoading = ref(false);
 const allMembers = ref<EntityType[]>([]);
 const currentPage = ref(1);
 const pageSize = ref(defaultPageSize);
@@ -203,6 +207,22 @@ fetchdata();
       <el-row>
         <el-col v-for="m of meta">
           <MetaField :meta="m" />
+        </el-col>
+      </el-row>
+
+      <el-row v-if="config.relationships.length">
+        <el-col :xs="24" :sm="24" :md="24" :lg="24" :xl="24">
+          <div>
+            <RelationshipEntityFinder
+              v-for="relationship of config.relationships"
+              :key="relationship.title"
+              :lookups="resolveRelationshipLookups(relationship)"
+              :exclude-entity-id="relationship.excludeCurrentEntity ? entity?.id : undefined"
+              :title="relationship.title"
+              :empty-text="relationship.emptyText"
+              :limit="relationship.limit"
+            />
+          </div>
         </el-col>
       </el-row>
 

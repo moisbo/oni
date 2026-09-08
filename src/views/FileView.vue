@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { inject, ref } from 'vue';
+import { inject, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import FileResolve from '@/components/FileResolve.vue';
 import MetaField from '@/components/MetaField.vue';
+import RelationshipEntityFinder from '@/components/RelationshipEntityFinder.vue';
+import { useRelationshipLookups } from '@/composables/relationshipLookups';
 import { useEntityView } from '@/composables/useEntityView';
 import { ui } from '@/configuration';
 import { getEntityUrl } from '@/lib/tools';
@@ -19,14 +21,14 @@ const { name, meta, populateName, populateMeta, handleMissingEntity } = useEntit
 
 type FileRoCrate = RoCrate['hasPart'][number];
 
-const id = route.query.id?.toString() as string;
-
 const parentTitle = ref<string>();
 const parentUrl = ref<string>();
 const metadata = ref<FileRoCrate | undefined>();
 const entity = ref<EntityType | undefined>();
 const annotations = ref<AnnotationRef[]>([]);
 const isLoading = ref(true);
+
+const { resolveRelationshipLookups } = useRelationshipLookups(entity, metadata);
 
 const populateData = (md: FileRoCrate, e: EntityType) => {
   populateName(md as unknown as RoCrate, md['@id']);
@@ -45,6 +47,15 @@ const populateData = (md: FileRoCrate, e: EntityType) => {
 };
 
 const getFileMetadata = async () => {
+  const id = route.query.id?.toString();
+
+  parentTitle.value = undefined;
+  parentUrl.value = undefined;
+  metadata.value = undefined;
+  entity.value = undefined;
+  annotations.value = [];
+  isLoading.value = true;
+
   if (!id) {
     handleMissingEntity();
 
@@ -86,7 +97,13 @@ const getFileMetadata = async () => {
   }
 };
 
-getFileMetadata();
+watch(
+  () => route.query.id,
+  () => {
+    getFileMetadata();
+  },
+  { immediate: true },
+);
 </script>
 
 <template>
@@ -102,7 +119,7 @@ getFileMetadata();
                 <font-awesome-icon icon="fa fa-arrow-left" />
                 {{ parentTitle }}
               </router-link>
-              >&nbsp;<span>{{ name || id }}</span>
+              >&nbsp;<span>{{ name || route.query.id }}</span>
             </h3>
           </el-col>
         </el-row>
@@ -113,6 +130,21 @@ getFileMetadata();
                 <MetaField :meta="m" />
               </li>
             </ul>
+          </el-col>
+        </el-row>
+        <el-row v-if="ui.file.relationships.length">
+          <el-col :xs="24" :sm="24" :md="24" :lg="24" :xl="24">
+            <div>
+              <RelationshipEntityFinder
+                v-for="relationship of ui.file.relationships"
+                :key="relationship.title"
+                :lookups="resolveRelationshipLookups(relationship)"
+                :exclude-entity-id="relationship.excludeCurrentEntity ? entity?.id : undefined"
+                :title="relationship.title"
+                :empty-text="relationship.emptyText"
+                :limit="relationship.limit"
+              />
+            </div>
           </el-col>
         </el-row>
         <el-row>

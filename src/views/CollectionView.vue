@@ -16,8 +16,10 @@ import SummariesCard from '@/components/cards/SummariesCard.vue';
 import TakedownCard from '@/components/cards/TakedownCard.vue';
 import DownloadsModal from '@/components/DownloadsModal.vue';
 import MetaField from '@/components/MetaField.vue';
+import RelationshipEntityFinder from '@/components/RelationshipEntityFinder.vue';
 import MemberOfLink from '@/components/widgets/MemberOfLink.vue';
 import { useHead } from '@/composables/head';
+import { useRelationshipLookups } from '@/composables/relationshipLookups';
 import { useEntityView } from '@/composables/useEntityView';
 import { ui } from '@/configuration';
 import { joinAll } from '@/lib/tools';
@@ -42,10 +44,12 @@ const errorDialogVisible = ref(false);
 const openDownloads = ref(false);
 const isLoading = ref(true);
 
+const { name, meta, populateName, populateMeta, handleMissingEntity } = useEntityView(config);
+
 const metadata = ref<RoCrate | undefined>();
 const entity = ref<EntityType | undefined>();
 
-const { name, meta, populateName, populateMeta, handleMissingEntity } = useEntityView(config);
+const { resolveRelationshipLookups } = useRelationshipLookups(entity, metadata);
 
 const populate = (md: RoCrate) => {
   populateName(md);
@@ -134,6 +138,22 @@ onMounted(fetchData);
         </el-col>
       </el-row>
 
+      <el-row v-if="config.relationships.length">
+        <el-col :xs="24" :sm="24" :md="24" :lg="24" :xl="24">
+          <div>
+            <RelationshipEntityFinder
+              v-for="relationship of config.relationships"
+              :key="relationship.title"
+              :lookups="resolveRelationshipLookups(relationship)"
+              :exclude-entity-id="relationship.excludeCurrentEntity ? entity?.id : undefined"
+              :title="relationship.title"
+              :empty-text="relationship.emptyText"
+              :limit="relationship.limit"
+            />
+          </div>
+        </el-col>
+      </el-row>
+
       <el-row>
         <el-col>
           <CollectionMembers :title="t('collection.subCollections')" :id="id"
@@ -145,6 +165,13 @@ onMounted(fetchData);
         <el-col>
           <CollectionMembers :title="t('collection.objectsInCollection')" :id="id"
             entityType="http://pcdm.org/models#Object" routePath="object" :sort="config.memberSort" />
+        </el-col>
+      </el-row>
+
+      <el-row>
+        <el-col>
+          <CollectionMembers :title="t('collection.peopleInCollection')" :id="id"
+            entityType="http://schema.org/Person" routePath="person" :sort="config.memberSort" />
         </el-col>
       </el-row>
     </el-col>

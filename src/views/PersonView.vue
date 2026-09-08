@@ -6,10 +6,12 @@ import { useRoute } from 'vue-router';
 import AccessHelper from '@/components/AccessHelper.vue';
 import FileResolve from '@/components/FileResolve.vue';
 import MetaField from '@/components/MetaField.vue';
+import RelationshipEntityFinder from '@/components/RelationshipEntityFinder.vue';
 import { resolveFileVisibilityConfig, resolvePreferredPhotoField } from '@/composables/fileVisibility';
 import { useHead } from '@/composables/head';
+import { useRelationshipLookups } from '@/composables/relationshipLookups';
 import { useEntityView } from '@/composables/useEntityView';
-import { ui } from '@/configuration';
+import { personConfig, ui } from '@/configuration';
 import type { ApiService, EntityType, FileType, GetFilesParams, RoCrate } from '@/services/api';
 import { resolvePersonFilePresentationData } from '@/services/personFiles';
 
@@ -23,11 +25,10 @@ if (!api) {
 const route = useRoute();
 const head = injectHead();
 const gtm = useGtm();
-const { object: config } = ui;
 const fileVisibility = resolveFileVisibilityConfig(ui.presentation?.fileVisibilityField);
 const preferredPhotoField = resolvePreferredPhotoField(ui.presentation?.preferredPhotoField);
 
-const { name, meta, populateName, populateMeta, handleMissingEntity } = useEntityView(config);
+const { name, meta, populateName, populateMeta, handleMissingEntity } = useEntityView(personConfig);
 
 const isLoading = ref(false);
 const entity = ref<EntityType | undefined>();
@@ -164,6 +165,8 @@ const photoEntity = computed(() => {
 
 const thumbnailPhotos = computed(() => photoFiles.value.filter((file) => file.id !== photoFile.value?.id));
 
+const { resolveRelationshipLookups } = useRelationshipLookups(entity, metadata);
+
 const fetchAllPages = async <T>(
   fetcher: (params: Record<string, string>) => Promise<Record<string, unknown>>,
   baseParams: Record<string, string>,
@@ -288,8 +291,7 @@ fetchData();
             <el-row>
               <el-col :span="24" class="flex justify-center">
                 <div
-                  class="w-full max-w-md h-64 rounded-lg border border-gray-300 bg-gray-100 text-gray-600 flex flex-col items-center justify-center"
-                >
+                  class="w-full max-w-md h-64 rounded-lg border border-gray-300 bg-gray-100 text-gray-600 flex flex-col items-center justify-center">
                   <p class="mt-3 text-sm">Loading photos...</p>
                 </div>
               </el-col>
@@ -306,24 +308,15 @@ fetchData();
             <el-row v-if="thumbnailPhotos.length" class="mt-4">
               <el-col :span="24">
                 <div class="flex flex-col gap-3">
-                  <button
-                    v-for="photo of thumbnailPhotos"
-                    :key="photo.id"
-                    type="button"
+                  <button v-for="photo of thumbnailPhotos" :key="photo.id" type="button"
                     class="w-full rounded-lg border border-gray-300 overflow-hidden cursor-pointer bg-white"
-                    @click="selectedPhotoId = photo.id"
-                  >
+                    @click="selectedPhotoId = photo.id">
                     <div v-if="photoUrls[photo.id]" class="h-24 w-full bg-gray-50 flex items-center justify-center p-2">
-                      <img
-                        :src="photoUrls[photo.id]"
-                        :alt="photo.filename"
-                        class="max-h-full max-w-full w-auto h-auto object-contain"
-                      />
+                      <img :src="photoUrls[photo.id]" :alt="photo.filename"
+                        class="max-h-full max-w-full w-auto h-auto object-contain" />
                     </div>
-                    <div
-                      v-else
-                      class="h-24 w-full bg-gray-100 text-gray-500 flex items-center justify-center text-xs px-2"
-                    >
+                    <div v-else
+                      class="h-24 w-full bg-gray-100 text-gray-500 flex items-center justify-center text-xs px-2">
                       {{ photo.filename }}
                     </div>
                   </button>
@@ -334,8 +327,7 @@ fetchData();
           <el-row v-else>
             <el-col :span="24" class="flex justify-center">
               <div
-                class="w-full max-w-md h-64 rounded-lg border border-gray-300 bg-gray-100 text-gray-600 flex flex-col items-center justify-center"
-              >
+                class="w-full max-w-md h-64 rounded-lg border border-gray-300 bg-gray-100 text-gray-600 flex flex-col items-center justify-center">
                 <font-awesome-icon icon="fa-regular fa-user" size="3x" />
                 <p class="mt-3 text-sm">No photo available</p>
               </div>
@@ -351,6 +343,14 @@ fetchData();
               <MetaField :meta="item" />
             </el-col>
           </el-row>
+        </el-col>
+      </el-row>
+      <el-row class="mt-6">
+        <el-col v-for="relationship of personConfig.relationships" :key="relationship.title" :span="24"
+          class="last:mb-0">
+          <RelationshipEntityFinder :lookups="resolveRelationshipLookups(relationship)"
+            :exclude-entity-id="relationship.excludeCurrentEntity ? entity.id : undefined" :title="relationship.title"
+            :empty-text="relationship.emptyText" :limit="relationship.limit" />
         </el-col>
       </el-row>
     </el-col>

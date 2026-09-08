@@ -1,3 +1,4 @@
+import { Box, Document, Folder, User } from '@element-plus/icons-vue';
 import type { EntityType } from '@/services/api';
 
 const unitMultipliers = {
@@ -137,4 +138,76 @@ export const formatDuration = (seconds: number) => {
   }
 
   return parts.length > 0 ? parts.join(' ') : '0s';
+};
+
+export const getEntityIcon = (entity: EntityType) => {
+  switch (entity.entityType) {
+    case 'http://pcdm.org/models#Collection':
+      return Folder;
+    case 'http://pcdm.org/models#Object':
+      return Box;
+    case 'http://schema.org/Person':
+      return User;
+    case 'http://schema.org/MediaObject':
+      return Document;
+    default:
+      return Document;
+  }
+};
+
+const extractStringValues = (value: unknown): string[] => {
+  if (!value) {
+    return [];
+  }
+
+  if (typeof value === 'string') {
+    return [value];
+  }
+
+  if (Array.isArray(value)) {
+    return value.flatMap((item) => extractStringValues(item));
+  }
+
+  if (typeof value === 'object') {
+    const record = value as Record<string, unknown>;
+
+    if (typeof record['@id'] === 'string') {
+      return [record['@id']];
+    }
+
+    if (typeof record.id === 'string') {
+      return [record.id];
+    }
+  }
+
+  return [];
+};
+
+export const extractStringValuesAtPath = (input: unknown, path: string): string[] => {
+  const segments = path.split('.').filter(Boolean);
+
+  const visit = (value: unknown, remaining: string[]): string[] => {
+    if (remaining.length === 0) {
+      return extractStringValues(value);
+    }
+
+    if (!value) {
+      return [];
+    }
+
+    if (Array.isArray(value)) {
+      return value.flatMap((entry) => visit(entry, remaining));
+    }
+
+    if (typeof value !== 'object') {
+      return [];
+    }
+
+    const [head, ...tail] = remaining;
+    const record = value as Record<string, unknown>;
+
+    return visit(record[head], tail);
+  };
+
+  return visit(input, segments);
 };
