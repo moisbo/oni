@@ -98,6 +98,7 @@
     "downloads": "Downloads",
     "downloadsTooltip": "Downloads, die mit der aktuellen Sammlung verbunden sind. Wählen Sie Alle zugehörigen Downloads anzeigen, um die vollständige Liste der verfügbaren Downloads für die angegebene Sammlung anzuzeigen.",
     "objectsInCollection": "Objekte in der Sammlung",
+    "peopleInCollection": "Personen in der Sammlung",
     "showAllDownloads": "Alle zugehörigen Downloads anzeigen",
     "subCollections": "Untersammlungen",
     "retrieveMetadata": "Metadaten abrufen",

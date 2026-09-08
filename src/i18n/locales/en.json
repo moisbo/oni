@@ -98,6 +98,7 @@
     "downloads": "Downloads",
     "downloadsTooltip": "Downloads associated with the current collection. Select Show All Related Downloads to view the complete list of downloads available for the given collection.",
     "objectsInCollection": "Objects in Collection",
+    "peopleInCollection": "People in Collection",
     "showAllDownloads": "Show All Related Downloads",
     "subCollections": "Sub Collections",
     "retrieveMetadata": "Retrieve Metadata",
