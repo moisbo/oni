@@ -27,6 +27,11 @@ at the repo root.
       - [Filter Mode](#filter-mode)
       - [Explicit Mode](#explicit-mode)
       - [File Metadata](#file-metadata)
+    - [Relationship Widgets](#relationship-widgets)
+      - [Example](#example)
+      - [Lookup fields](#lookup-fields)
+      - [Target sources](#target-sources)
+      - [Filter vs direct mode](#filter-vs-direct-mode)
     - [HTML Head Metadata](#html-head-metadata)
     - [Aggregations (Faceted Search)](#aggregations-faceted-search)
     - [Login Configuration](#login-configuration)
@@ -512,6 +517,83 @@ In `explicit` mode, only fields listed in `show` are displayed.
   }
 }
 ```
+
+### Relationship Widgets
+
+The relationship widget displays related entities beneath an object, collection, file, or person record. It is configured under `ui.<entity>.relationships` and can be used to surface links such as a file's speaker, an entity's parent collection, or a person’s associated records.
+
+Each widget has a `title` and one or more `lookups`. A lookup can either:
+
+- search for matching related records using `relationshipFields` (`mode: "filter"`, the default), or
+- fetch the target entity directly by ID (`mode: "direct"`).
+
+#### Example
+
+```json
+{
+  "ui": {
+    "file": {
+      "relationships": [
+        {
+          "title": "Associated Items for this File",
+          "lookups": [
+            {
+              "relationshipFields": ["ldac:speaker.@id"],
+              "target": {
+                "source": "metadataField",
+                "field": "ldac:speaker.@id"
+              }
+            },
+            {
+              "mode": "direct",
+              "target": {
+                "source": "metadataField",
+                "field": "ards:soundRecordist.@id"
+              }
+            }
+          ],
+          "excludeCurrentEntity": true,
+          "limit": 12
+        }
+      ]
+    }
+  }
+}
+```
+
+#### Lookup fields
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `title` | string | Yes | Heading shown above the related-items block |
+| `lookups` | array | Yes | One or more relationship lookup definitions |
+| `emptyText` | string | No | Custom message when there are no related items |
+| `excludeCurrentEntity` | boolean | No | Excludes the current entity from the related results (default: `false`) |
+| `limit` | number | No | Maximum number of items to show for the whole widget |
+
+For each item in `lookups`:
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `mode` | string | No | Either `filter` (default) or `direct` |
+| `relationshipFields` | array | Yes in filter mode | Fields to query against the target IDs |
+| `target` | object | No | Where to get the ID(s) from: `entityId`, `entityField`, or `metadataField` |
+| `target.source` | string | No | One of `entityId`, `entityField`, or `metadataField` |
+| `target.field` | string | Depends on source | Field name when using `entityField` or `metadataField` |
+| `entityTypes` | array | No | Restricts results to specific RO-Crate entity types |
+| `limit` | number | No | Maximum number of items returned for that lookup |
+
+#### Target sources
+
+- `entityId`: use the current entity's own ID.
+- `entityField`: use a field already present on the current entity.
+- `metadataField`: read the ID from a metadata field on the current entity, such as `ldac:speaker.@id`.
+
+#### Filter vs direct mode
+
+`filter` mode is best when the data is not already a direct reference and you want to find related records by matching relationship metadata. `direct` mode is best when the value is already a canonical entity ID and you just want to fetch the referenced record(s) directly.
+
+This widget is used in both the entity detail pages and the map popups to provide contextual navigation to related collections, people, files, and other items.
 
 ### HTML Head Metadata
 
