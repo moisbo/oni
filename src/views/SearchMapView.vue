@@ -295,22 +295,24 @@ const getInnerHTMLTooltip = (entity: EntityType) => {
   const title = entity.identifiers?.shortIdentifier ? `${entity.identifiers.shortIdentifier} - ${name}` : name;
   const type = entity.entityType;
   const href = getEntityUrl(entity);
+  const clickableHref = getBasePathUrl(href);
 
   let innerHTML = `
     <div>
       <h3 class="mb-2 mt-1 text-2xl">
-        <a href="${href}" data-route="${href}">${title}</a>
+        <a href="${clickableHref}" data-route="${href}">${title}</a>
       </h3>
       <h4>Type: ${type}</h4>
   `;
 
   if (entity.memberOf) {
-    const memberOfHref = getBasePathUrl(`/collection?id=${encodeURIComponent(entity.memberOf.id)}`);
+    const memberOfRoute = `/collection?id=${encodeURIComponent(entity.memberOf.id)}`;
+    const memberOfHref = getBasePathUrl(memberOfRoute);
     const innerHTMLMemberOf = `
       <a
         class="text-sm m-1 text-gray-700 underline"
         href="${memberOfHref}"
-        data-route="${memberOfHref}"
+        data-route="${memberOfRoute}"
       >
         ${entity.memberOf.name || entity.memberOf.id}
       </a>
@@ -329,7 +331,7 @@ const getInnerHTMLTooltip = (entity: EntityType) => {
 
   innerHTML += `
         <p class="justify-self-end">
-          <a href="${href}" data-route="${href}">See more</a>
+          <a href="${clickableHref}" data-route="${href}">See more</a>
         </p>
       </div>
     </div>
