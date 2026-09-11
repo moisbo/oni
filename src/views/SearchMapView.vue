@@ -14,7 +14,7 @@ import SearchLayout from '@/components/SearchLayout.vue';
 import { LocationDivIcon, NumberedDivIcon } from '@/components/widgets/geo_types';
 import { useSearch } from '@/composables/search';
 import { ui } from '@/configuration';
-import { getEntityUrl } from '@/lib/tools';
+import { getBasePathUrl, getEntityUrl } from '@/lib/tools';
 import type { ApiService, EntityType, SearchParams } from '@/services/api';
 
 const {
